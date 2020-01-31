@@ -1,2 +1,2 @@
 # DAMI
-DAMI-homework tasks and code
+Data mining course, homework tasks and code
