@@ -1,0 +1,182 @@
+
+# *********************************************
+# DAMI Preprocessing Exercise R file
+# Complete the codes to complete the assignment
+# *********************************************
+
+#anah4939, 8909080379 Andreas Ährlund-Richter 
+
+# 1. Import data for analysis to R environment
+# Downloaded "Adult" dataset from UCI Machine Learning Repository
+# URL http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data
+# Import dataset in adult_db
+# Missing values are represented as "?" in data file, make sure that R read them as missing values (NAs)
+# ------------------------------------------------------------------------------------------------------ #
+# use read.table(), type ?read.table for help
+load("R.default.par.RData"); par(par.defaults)
+library(data.table)
+setwd("/Users/AAR/Dropbox/Andreas/PLUGG_JOBB/Autumn19/DAMI/Homework1")
+
+adult_db <- read.table(header = FALSE,sep =",", strip.white = TRUE,"adult.data",na.strings = c("?"),
+                    stringsAsFactors = FALSE  )# ****** YOUR CODE GOES HERE *******
+ 
+  
+  # Assign attribute names (column names) to the data we just imported
+  # Attribute names are in separate file "adult.names", scroll down to the bottom of this file
+  # Attribute names such as ("age", "workclass", "fnlwgt",...)
+  # Last column of the dataset adult.db with values ">50K" and "<=50K" does not have name, 
+  # this is the class attribute, so we just name it as "class"
+  
+  colnames(adult_db) = c("age",
+                         "workclass",
+                         "fnlwgt",
+                         "education",
+                         "education_num",
+                         "marital_status",
+                         "occupation",
+                         "relationship",
+                         "race",
+                         "sex",
+                         "capital_gain",
+                         "capital_loss",
+                         "hours_per_week",
+                         "native_country",
+                         "class")
+
+
+# 2. Check for missing values
+# Write code to plot missingness and count missing values each attribute has
+# Inorder to plot missingness, you need to first install "Amelia" package
+# Hint: use "apply" function along columns of "adult.db", for each column (attribute) find how many NAs are there
+# --------------------------------------------------------------------------------------------------------------- #
+  
+library(Amelia)
+# plot missing values in data
+# ****** YOUR CODE HERE ******* #
+# HINT: use missmap()
+par(mar = c(6, 4.1, 4.1, 2.1))  
+missmap(adult_db,col =c("red","blue"), legend = FALSE,ylabels = c())
+# count number of missing values in all attributes
+# ****** YOUR CODE HERE *****
+na_count <- apply(adult_db_nomiss, MARGIN = 2, FUN = function(x) {sum(is.na(x))})
+# Delete records (rows) with any missing value
+# ****** YOUR CODE HERE *******
+adult_db_nomiss <- na.omit(adult_db)
+na_count2 <- apply(adult_db_nomiss, MARGIN = 2, FUN = function(x) {sum(is.na(x))})
+
+  # 3. We will take only small chunk of the data for our purpose.
+  # So, randomly select 1000 records from among 30 thousand records in the dataset.
+  # ------------------------------------------------------------------------------- #
+  set.seed(145)
+idx = sample(1:nrow(adult_db_nomiss),1500)
+adult_db_lim = adult_db_nomiss[idx,]
+row.names(adult_db_lim) <- NULL
+
+
+# 3a. Examine attributes of the dataset
+# Plot histogram for numeric attribute "age", with 100 (for <=50K) and 50(for >50K) breaks, 
+# show main title and attribute name on the plot.
+# --------------------------------------------------------------------------------------------------------
+
+# ******* YOUR CODE FOR HISTOGRAM PLOT GOES HERE ******** #
+# HINT: use hist()
+
+head(adult_db_lim)
+
+low_class <- which(adult_db_lim$class == "<=50K")
+high_class <- which(adult_db_lim$class == ">50K")
+
+hist(adult_db_lim$age[low_class], breaks = 100, xlab = "age", ylab = "frequency", col = rgb(1,0,0,1), main = "Age of adults",
+   )
+hist(adult_db_lim$age[high_class], breaks = 50, xlab = "age", ylab = "frequency", col = rgb(0,0,1,1), add=T,
+     )
+legend("right", 
+       c(">50", "<=50"), 
+       pch=c(16,16),
+       col=c("blue","red"), 
+)
+
+
+
+# ******************************************************* #
+
+# 3b. Plot barchart for categorical attribute "relationship", 
+# show legend, attribute name and main title for the plot.
+# ******* YOUR CODE FOR BAR CHART GOES HERE ******* #
+# HINT: use barplot()
+# ************************************************* #
+par(mar=c(8,3,2,2))
+barcols = c("black","red","green","blue","cyan","pink")
+barnames = c("Not-in-family","Wife","Own-child","Husband","Unmarried","Other-relative")
+barplot(cex.lab = 0.3,table(adult_db_lim$relationship), las = 2,
+       main = "Relationship of adults",
+       col = barcols,
+      )
+par(mar=c(2,3,2,2))
+legend("right",
+       c(unique(adult_db_lim$relationship)),
+       cex = 0.9,
+       pch = (c(rep(16,length(barcols)))),
+       col = barcols
+)
+ 
+
+# 3c. Plot a boxplot for attribute "Age" for groups with earning "<=50K", ">50K"
+# ------------------------------------------------------------------------------
+
+# ****** YOUR CODE GOES HERE ***** #
+# HINT: use boxplot()
+
+low_class <- which(adult_db_lim$class == "<=50K")
+high_class <- which(adult_db_lim$class == ">50K")
+par(mar=c(10,3,2,2))
+boxplot(adult_db_lim$age[low_class],adult_db_lim$age[high_class],
+        col = "red",
+        las = 2,
+        main = "Age of adults",
+        names = c("<=50",">50")) 
+
+
+
+
+
+# 4 Create new data set from our latest dataset with only numeric attributes
+# ------------------------------------------------------------------------
+adult_db_numeric <- adult_db_lim[,c("age", "fnlwgt", "education_num", "capital_gain", "capital_loss", "hours_per_week")]
+class_cat <- adult_db_lim[,c("class")]
+
+# Standardize numeric attributes in "adult_db_numeric" dataset.
+# mean = 0 and sd = 1 for all numeric attributes
+# *** YOUR CODE HERE *** #
+
+adult_db_num_std <- data.frame( apply(adult_db_numeric,2,function(x) { scale(x) }) )
+apply(adult_db_num_std, 2, mean)
+apply(adult_db_num_std, 2, sd)
+apply(adult_db_num_std, 2, min)
+apply(adult_db_num_std, 2, max)
+
+
+  # we can check the mean and standard deviation of the standardized data
+apply(adult_db_num_std, 2, mean)
+apply(adult_db_num_std, 2, sd)
+
+# 5a. Run Principal Component Analysis (PCA) on the numeric dataset from above "adult_db_num_std"
+# plot the first 2 principal components
+# ------------------------------------------------------------------------------------------
+
+# ******** YOUR CODE FOR GETTING PRINCIPAL COMPONENTS GOES HERE ******** #
+# HINT: use prcomp()
+pr.out <- pr.out <- prcomp(adult_db_num_std, scale = TRUE, center = TRUE)
+  
+adult_db_pca <- pr.out$x
+
+# ******** YOUR CODE TO PLOT FOR FIRST TWO PCs ****** #
+# plot(), legend()
+
+colors <- adult_db_lim$class
+colors[ colors == ">50K"] <- "green"
+colors[ colors == "<=50K"] <- "red"
+head(colors)
+
+plot(adult_db_pca[,1:2], col = colors,pch = 20, main = "First two Principal Components")
+
